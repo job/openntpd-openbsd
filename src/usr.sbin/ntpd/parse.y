@@ -65,6 +65,7 @@ struct opts {
 	int		stratum;
 	int		rtable;
 	char		*refstr;
+	struct ntp_addr	*local_addr;
 } opts;
 void		opts_default(void);
 
@@ -82,7 +83,7 @@ typedef struct {
 
 %token	LISTEN ON CONSTRAINT CONSTRAINTS FROM
 %token	SERVER SERVERS SENSOR CORRECTION RTABLE REFID STRATUM WEIGHT
-%token	ERROR
+%token	ERROR LOCALADDR
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.addr>		address url
@@ -94,6 +95,7 @@ typedef struct {
 %type	<v.opts>		refid
 %type	<v.opts>		stratum
 %type	<v.opts>		weight
+%type	<v.opts>		local_addr
 %%
 
 grammar		: /* empty */
@@ -153,6 +155,7 @@ main		: LISTEN ON address listen_opts	{
 
 				p = new_peer();
 				p->weight = $3.weight;
+				p->local_addr = $3.local_addr;
 				p->addr = h;
 				p->addr_head.a = h;
 				p->addr_head.pool = 1;
@@ -190,6 +193,7 @@ main		: LISTEN ON address listen_opts	{
 			}
 
 			p->weight = $3.weight;
+			p->local_addr = $3.local_addr;
 			p->addr_head.a = p->addr;
 			p->addr_head.pool = 0;
 			p->addr_head.name = strdup($2->name);
@@ -348,6 +352,7 @@ server_opts_l	: server_opts_l server_opt
 		| server_opt
 		;
 server_opt	: weight
+		| local_addr
 		;
 
 sensor_opts	:	{ opts_default(); }
@@ -403,6 +408,27 @@ weight		: WEIGHT NUMBER	{
 			}
 			opts.weight = $2;
 		}
+		;
+
+local_addr	: LOCALADDR address {
+			struct ntp_addr *a;
+
+			a = $2->a;
+			if (a->ss.ss_family != AF_INET &&
+			    a->ss.ss_family != AF_INET6) {
+				yyerror("IPv4 or IPv6 "
+				    "expected");
+				free(a);
+				free($2);
+				YYERROR;
+			}
+
+			opts.local_addr = $2->a;
+			free(a);
+			free($2);
+		}
+		;
+
 rtable		: RTABLE NUMBER {
 			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
 				yyerror("rtable must be between 1"
@@ -460,6 +486,7 @@ lookup(char *s)
 		{ "correction",		CORRECTION},
 		{ "from",		FROM},
 		{ "listen",		LISTEN},
+		{ "local-address",	LOCALADDR},
 		{ "on",			ON},
 		{ "refid",		REFID},
 		{ "rtable",		RTABLE},

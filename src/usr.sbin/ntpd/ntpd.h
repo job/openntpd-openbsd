@@ -150,6 +150,7 @@ struct ntp_peer {
 	TAILQ_ENTRY(ntp_peer)		 entry;
 	struct ntp_addr_wrap		 addr_head;
 	struct ntp_addr			*addr;
+	struct ntp_addr			*local_addr;
 	struct ntp_query		*query;
 	struct ntp_offset		 reply[OFFSET_ARRAY_SIZE];
 	struct ntp_offset		 update;
