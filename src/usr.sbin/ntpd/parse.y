@@ -411,20 +411,28 @@ weight		: WEIGHT NUMBER	{
 		;
 
 local_addr	: LOCALADDR address {
-			struct ntp_addr *a;
+			struct ntp_addr *na;
 
-			a = $2->a;
-			if (a->ss.ss_family != AF_INET &&
-			    a->ss.ss_family != AF_INET6) {
+                        if ((na = $2->a) == NULL && !na) {
+                                yyerror("XX could not resolve \"%s\"", $2->name);
+                                free($2->name);
+                                free($2);
+                                YYERROR;
+                        }
+
+			yyerror("XX dit \"%s\"", $2->a);
+			na = $2->a;
+			if (na->ss.ss_family != AF_INET &&
+			    na->ss.ss_family != AF_INET6) {
 				yyerror("IPv4 or IPv6 "
 				    "expected");
-				free(a);
+				free(na);
 				free($2);
 				YYERROR;
 			}
 
 			opts.local_addr = $2->a;
-			free(a);
+			free(na);
 			free($2);
 		}
 		;
@@ -447,6 +455,7 @@ opts_default(void)
 	memset(&opts, 0, sizeof opts);
 	opts.weight = 1;
 	opts.stratum = 1;
+	opts.local_addr = 0;
 }
 
 struct keywords {
