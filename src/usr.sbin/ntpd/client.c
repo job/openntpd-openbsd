@@ -137,10 +137,14 @@ client_query(struct ntp_peer *p)
 
 	if (p->query->fd == -1) {
 		struct sockaddr *sa = (struct sockaddr *)&p->addr->ss;
+		struct sockaddr *la = (struct sockaddr *)&p->local_addr->ss;
 
 		if ((p->query->fd = socket(p->addr->ss.ss_family, SOCK_DGRAM,
 		    0)) == -1)
 			fatal("client_query socket");
+
+		if (bind(p->query->fd, la, sizeof(la)) == -1)
+			fatal("count bind to local-address");
 
 		if (connect(p->query->fd, sa, SA_LEN(sa)) == -1) {
 			if (errno == ECONNREFUSED || errno == ENETUNREACH ||
