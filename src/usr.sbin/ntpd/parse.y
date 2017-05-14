@@ -65,7 +65,7 @@ struct opts {
 	int		stratum;
 	int		rtable;
 	char		*refstr;
-	struct ntp_addr	*local_addr;
+	struct sockaddr_storage local_addr;
 } opts;
 void		opts_default(void);
 
@@ -410,30 +410,19 @@ weight		: WEIGHT NUMBER	{
 		}
 		;
 
-local_addr	: LOCALADDR address {
-			struct ntp_addr *na;
+local_addr	: LOCALADDR STRING {
+			struct sockaddr_storage	ss;
 
-                        if ((na = $2->a) == NULL && !na) {
-                                yyerror("XX could not resolve \"%s\"", $2->name);
-                                free($2->name);
-                                free($2);
-                                YYERROR;
-                        }
-
-			yyerror("XX dit \"%s\"", $2->a);
-			na = $2->a;
-			if (na->ss.ss_family != AF_INET &&
-			    na->ss.ss_family != AF_INET6) {
-				yyerror("IPv4 or IPv6 "
-				    "expected");
-				free(na);
-				free($2);
+			if (inet_pton(AF_INET, $2, &ss) == 1)
+				ss.ss_family = AF_INET;
+			else if (inet_pton(AF_INET6, $2, &ss) == 1)
+				ss.ss_family = AF_INET6;
+			else {
+				yyerror("invalid IPv4 or IPv6 address: %s\n", $2);
 				YYERROR;
 			}
 
-			opts.local_addr = $2->a;
-			free(na);
-			free($2);
+			opts.local_addr = ss;
 		}
 		;
 
@@ -455,7 +444,6 @@ opts_default(void)
 	memset(&opts, 0, sizeof opts);
 	opts.weight = 1;
 	opts.stratum = 1;
-	opts.local_addr = 0;
 }
 
 struct keywords {
