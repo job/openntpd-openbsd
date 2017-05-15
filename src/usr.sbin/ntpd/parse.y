@@ -65,7 +65,6 @@ struct opts {
 	int		stratum;
 	int		rtable;
 	char		*refstr;
-	struct sockaddr_storage local_addr;
 } opts;
 void		opts_default(void);
 
@@ -75,6 +74,7 @@ typedef struct {
 		char			*string;
 		struct ntp_addr_wrap	*addr;
 		struct opts		 opts;
+		struct sockaddr_storage	*ss;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -95,7 +95,7 @@ typedef struct {
 %type	<v.opts>		refid
 %type	<v.opts>		stratum
 %type	<v.opts>		weight
-%type	<v.opts>		local_addr
+%type	<v.ss>			local_addr
 %%
 
 grammar		: /* empty */
@@ -421,7 +421,6 @@ local_addr	: LOCALADDR STRING {
 				yyerror("invalid IPv4 or IPv6 address: %s\n", $2);
 				YYERROR;
 			}
-
 			opts.local_addr = ss;
 		}
 		;

@@ -143,9 +143,10 @@ client_query(struct ntp_peer *p)
 		    0)) == -1)
 			fatal("client_query socket");
 
-		if (bind(p->query->fd, la, sizeof(la)) == -1)
-			fatal("couldn't bind to local-address: %s",
-			    inet_ntop(la));
+		if(sa->sa_family == la->sa_family)
+			if (bind(p->query->fd, la, SA_LEN(la)) == -1)
+				fatal("couldn't bind to local-address: %s",
+				    log_sockaddr(la));
 
 		if (connect(p->query->fd, sa, SA_LEN(sa)) == -1) {
 			if (errno == ECONNREFUSED || errno == ENETUNREACH ||
