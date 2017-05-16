@@ -143,13 +143,11 @@ client_query(struct ntp_peer *p)
 		    0)) == -1)
 			fatal("client_query socket");
 
-		log_info("XXX: %s", log_sockaddr((struct sockaddr *)&p->addr->ss));
-//		if(p->addr->ss.ss_family == p->local_addr.ss_family) {
-	//		fatal("XXXXX");
+		log_info("YYY: %s", log_sockaddr(la));
+		if(p->addr->ss.ss_family == p->local_addr.ss_family)
 			if (bind(p->query->fd, la, SA_LEN(la)) == -1)
 				fatal("couldn't bind to local-address: %s",
 				    log_sockaddr(la));
-//		}
 
 		if (connect(p->query->fd, sa, SA_LEN(sa)) == -1) {
 			if (errno == ECONNREFUSED || errno == ENETUNREACH ||

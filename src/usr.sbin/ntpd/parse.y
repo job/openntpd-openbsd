@@ -435,7 +435,7 @@ local_addr	: LOCALADDR STRING {
 				freeaddrinfo(res);
 				YYERROR;
 			}
-			memcpy(&($$), res->ai_addr, res->ai_addrlen);
+			memcpy(&(opts.local_addr), res->ai_addr, res->ai_addrlen);
 			freeaddrinfo(res);
 		}
 		;
