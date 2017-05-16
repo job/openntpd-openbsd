@@ -137,13 +137,14 @@ client_query(struct ntp_peer *p)
 
 	if (p->query->fd == -1) {
 		struct sockaddr *sa = (struct sockaddr *)&p->addr->ss;
-		struct sockaddr *la = &p->local_addr;
+		struct sockaddr *la = &(p->local_addr);
 
 		if ((p->query->fd = socket(p->addr->ss.ss_family, SOCK_DGRAM,
 		    0)) == -1)
 			fatal("client_query socket");
 
 		log_info("YYY: %s", log_sockaddr(la));
+		log_info("YYY2: %i", la->sa_family);
 		if(p->addr->ss.ss_family == la->sa_family)
 			if (bind(p->query->fd, la, SA_LEN(la)) == -1)
 				fatal("couldn't bind to local-address: %s",
