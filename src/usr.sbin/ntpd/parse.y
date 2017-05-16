@@ -65,6 +65,7 @@ struct opts {
 	int		stratum;
 	int		rtable;
 	char		*refstr;
+	struct sockaddr_storage	local_addr;
 } opts;
 void		opts_default(void);
 
@@ -74,7 +75,6 @@ typedef struct {
 		char			*string;
 		struct ntp_addr_wrap	*addr;
 		struct opts		 opts;
-		struct sockaddr_storage	*ss;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -95,7 +95,7 @@ typedef struct {
 %type	<v.opts>		refid
 %type	<v.opts>		stratum
 %type	<v.opts>		weight
-%type	<v.ss>			local_addr
+%type	<v.opts>		local_addr
 %%
 
 grammar		: /* empty */
@@ -411,17 +411,32 @@ weight		: WEIGHT NUMBER	{
 		;
 
 local_addr	: LOCALADDR STRING {
-			struct sockaddr_storage	ss;
+			int		retval;
+			struct addrinfo	hint, *res;
 
-			if (inet_pton(AF_INET, $2, &ss) == 1)
-				ss.ss_family = AF_INET;
-			else if (inet_pton(AF_INET6, $2, &ss) == 1)
-				ss.ss_family = AF_INET6;
-			else {
-				yyerror("invalid IPv4 or IPv6 address: %s\n", $2);
+			memset(&hint, 0, sizeof(hint));
+			hint.ai_family = PF_UNSPEC;
+			hint.ai_socktype = SOCK_DGRAM;  /* dummy */
+			hint.ai_flags = AI_NUMERICHOST;
+
+			if ((retval = getaddrinfo($2, NULL, &hint, &res))
+			    != 0) {
+				yyerror("could not parse the address %s: %s",
+				    $2, gai_strerror(retval));
+				free($2);
 				YYERROR;
 			}
-			opts.local_addr = ss;
+			free($2);
+
+			if (res->ai_family != AF_INET &&
+			    res->ai_family != AF_INET6) {
+				yyerror("address family(%d) is not supported",
+				    res->ai_family);
+				freeaddrinfo(res);
+				YYERROR;
+			}
+			memcpy(&($$), res->ai_addr, res->ai_addrlen);
+			freeaddrinfo(res);
 		}
 		;
 
@@ -443,6 +458,7 @@ opts_default(void)
 	memset(&opts, 0, sizeof opts);
 	opts.weight = 1;
 	opts.stratum = 1;
+	opts.local_addr.ss_family = AF_UNSPEC;
 }
 
 struct keywords {
