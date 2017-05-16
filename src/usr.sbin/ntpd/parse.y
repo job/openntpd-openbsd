@@ -65,7 +65,7 @@ struct opts {
 	int		stratum;
 	int		rtable;
 	char		*refstr;
-	struct addrinfo local_addr;
+	struct sockaddr local_addr;
 } opts;
 void		opts_default(void);
 
@@ -435,8 +435,8 @@ local_addr	: LOCALADDR STRING {
 				freeaddrinfo(res);
 				YYERROR;
 			}
-			opts.local_addr = &res;
-//			memcpy(&(opts.local_addr), res->ai_addr, res->ai_addrlen);
+			opts.local_addr.sa_family = res->ai_family;
+			memcpy(&(opts.local_addr), res->ai_addr, res->ai_addrlen);
 
 			freeaddrinfo(res);
 		}
@@ -460,7 +460,7 @@ opts_default(void)
 	memset(&opts, 0, sizeof opts);
 	opts.weight = 1;
 	opts.stratum = 1;
-	opts.local_addr.ai_family = AF_UNSPEC;
+	opts.local_addr.sa_family = AF_UNSPEC;
 }
 
 struct keywords {

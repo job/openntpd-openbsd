@@ -153,7 +153,7 @@ struct ntp_peer {
 	struct ntp_query		*query;
 	struct ntp_offset		 reply[OFFSET_ARRAY_SIZE];
 	struct ntp_offset		 update;
-	struct addrinfo			 local_addr;
+	struct sockaddr			 local_addr;
 	enum client_state		 state;
 	time_t				 next;
 	time_t				 deadline;

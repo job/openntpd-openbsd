@@ -137,7 +137,7 @@ client_query(struct ntp_peer *p)
 
 	if (p->query->fd == -1) {
 		struct sockaddr *sa = (struct sockaddr *)&p->addr->ss;
-		struct sockaddr *la = (struct sockaddr *)&p->local_addr->ia_addr;
+		struct sockaddr *la = &p->local_addr;
 
 		if ((p->query->fd = socket(p->addr->ss.ss_family, SOCK_DGRAM,
 		    0)) == -1)
