@@ -65,7 +65,7 @@ struct opts {
 	int		stratum;
 	int		rtable;
 	char		*refstr;
-	struct sockaddr local_addr;
+	struct sockaddr_storage	local_addr;
 } opts;
 void		opts_default(void);
 
@@ -411,14 +411,14 @@ weight		: WEIGHT NUMBER	{
 		;
 
 local_addr	: LOCALADDR STRING {
-			struct sockaddr sa;
+			struct sockaddr_storage ss;
 
-			bzero(&sa, sizeof(sa));
-			if (inet_pton(AF_INET, $2, &sa) == 1) {
-				sa.sa_family = AF_INET;
+			bzero(&ss, sizeof(ss));
+			if (inet_pton(AF_INET, $2, &ss) == 1) {
+				ss.ss_family = AF_INET;
 			}
-			else if (inet_pton(AF_INET6, $2, &sa) == 1) {
-				sa.sa_family = AF_INET6;
+			else if (inet_pton(AF_INET6, $2, &ss) == 1) {
+				ss.ss_family = AF_INET6;
 			}
 			else {
 				yyerror("invalid IPv4 or IPv6 address: %s\n",
@@ -426,7 +426,7 @@ local_addr	: LOCALADDR STRING {
 				free($2);
 				YYERROR;
 			}
-			opts.local_addr = sa;
+			opts.local_addr = ss;
 			free($2);
 		}
 		;
@@ -449,7 +449,7 @@ opts_default(void)
 	memset(&opts, 0, sizeof opts);
 	opts.weight = 1;
 	opts.stratum = 1;
-	opts.local_addr.sa_family = AF_UNSPEC;
+	opts.local_addr.ss_family = AF_UNSPEC;
 }
 
 struct keywords {
